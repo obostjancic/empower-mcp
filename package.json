@@ -25,6 +25,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "hono-mcp-server-sse-transport": "^0.0.7",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2"
   }

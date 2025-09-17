@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { PlantProduct, PlantProductSummary } from "../types.js";
 import { EMPOWER_PLANT_API_URL } from "../consts.js";
+import { z } from "zod";
 
 export function registerGetPlantsTools(server: McpServer) {
   server.registerTool(
@@ -10,11 +11,18 @@ export function registerGetPlantsTools(server: McpServer) {
       annotations: {
         description: "Get a list of plant products from Empower Plant store",
       },
-      inputSchema: {},
+      inputSchema: {
+        title: z
+          .string()
+          .optional()
+          .describe(
+            "Partial title of the plant to get care guide for, matches any part of the title, case insensitive"
+          ),
+      },
     },
-    async () => {
+    async ({ title }) => {
       try {
-        const plants = await fetchPlantProducts();
+        const plants = await fetchPlantProducts(title);
         return {
           content: [
             {
@@ -39,7 +47,9 @@ export function registerGetPlantsTools(server: McpServer) {
   );
 }
 
-async function fetchPlantProducts(): Promise<PlantProductSummary[]> {
+async function fetchPlantProducts(
+  search?: string
+): Promise<PlantProductSummary[]> {
   const response = await fetch(`${EMPOWER_PLANT_API_URL}/products`);
 
   if (!response.ok) {
@@ -48,12 +58,16 @@ async function fetchPlantProducts(): Promise<PlantProductSummary[]> {
 
   const products: PlantProduct[] = await response.json();
 
-  const summaries: PlantProductSummary[] = products.map((product) => ({
-    id: product.id,
-    title: product.title,
-    description: product.description,
-    price: product.price,
-  }));
+  const summaries: PlantProductSummary[] = products
+    .filter((product) =>
+      search ? product.title.toLowerCase().includes(search.toLowerCase()) : true
+    )
+    .map((product) => ({
+      id: product.id,
+      title: product.title,
+      description: product.description,
+      price: product.price,
+    }));
 
   return summaries;
 }

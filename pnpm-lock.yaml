@@ -27,6 +27,9 @@ importers:
         specifier: ^3.25.76
         version: 3.25.76
     devDependencies:
+      hono-mcp-server-sse-transport:
+        specifier: ^0.0.7
+        version: 0.0.7(@modelcontextprotocol/sdk@1.18.0)(hono@4.9.7)
       tsx:
         specifier: ^4.20.5
         version: 4.20.5
@@ -657,6 +660,12 @@ packages:
   hasown@2.0.2:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
+
+  hono-mcp-server-sse-transport@0.0.7:
+    resolution: {integrity: sha512-humMUuHiwOQNhP9iXRdEQa4TK4AMzsiI8wZep51ErIW154ovzCZGrXuRwyfREly8/0Supg+MEQwyQEFnxNejuA==}
+    peerDependencies:
+      '@modelcontextprotocol/sdk': '*'
+      hono: '*'
 
   hono@4.9.7:
     resolution: {integrity: sha512-t4Te6ERzIaC48W3x4hJmBwgNlLhmiEdEE5ViYb02ffw4ignHNHa5IBtPjmbKstmtKa8X6C35iWwK4HaqvrzG9w==}
@@ -1642,6 +1651,11 @@ snapshots:
   hasown@2.0.2:
     dependencies:
       function-bind: 1.1.2
+
+  hono-mcp-server-sse-transport@0.0.7(@modelcontextprotocol/sdk@1.18.0)(hono@4.9.7):
+    dependencies:
+      '@modelcontextprotocol/sdk': 1.18.0
+      hono: 4.9.7
 
   hono@4.9.7: {}
 
