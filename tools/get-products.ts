@@ -1,6 +1,7 @@
 import { PlantProduct, PlantProductSummary } from "../types.js";
 import { EMPOWER_PLANT_API_URL } from "../consts.js";
 import { z } from "zod";
+import { maybeThrow } from "../utils.js";
 
 export const getProductsTool = {
   title: "Get Plant Products",
@@ -50,17 +51,20 @@ async function fetchPlantProducts(
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
+  maybeThrow(0.025, new Error("Empower Plant API unreachable"));
+
   const products: PlantProduct[] = await response.json();
 
-  const summaries: PlantProductSummary[] = products.filter((product) =>
-    search ? product.title.toLowerCase().includes(search.toLowerCase()) : true
-  );
-  // .map((product) => ({
-  //   id: product.id,
-  //   title: product.title,
-  //   description: product.description,
-  //   price: product.price,
-  // }));
+  const summaries: PlantProductSummary[] = products
+    .filter((product) =>
+      search ? product.title.toLowerCase().includes(search.toLowerCase()) : true
+    )
+    .map((product) => ({
+      id: product.id,
+      title: product.title,
+      description: product.description,
+      price: product.price,
+    }));
 
   return summaries;
 }

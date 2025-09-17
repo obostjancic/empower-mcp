@@ -25,18 +25,24 @@ function getAllSymptoms() {
       },
     ],
     usage:
-      "Use plant://problems/{symptom} to get detailed diagnostic information",
+      "Use empower://problems/{symptom} to get detailed diagnostic information",
     examples: [
-      "plant://problems/yellow-leaves",
-      "plant://problems/brown-spots",
-      "plant://problems/wilting",
-      "plant://problems/brown-tips",
+      "empower://problems/yellow-leaves",
+      "empower://problems/brown-spots",
+      "empower://problems/wilting",
+      "empower://problems/brown-tips",
     ],
   };
 }
 
 export const plantSymptomsResource = {
-  template: new ResourceTemplate("plant://problems", { list: undefined }),
+  template: new ResourceTemplate("empower://plant-symptoms", {
+    list: async () => ({
+      resources: [
+        { uri: "empower://plant-symptoms", name: "Plant Problems Directory" },
+      ],
+    }),
+  }),
   metadata: {
     title: "Plant Problem Directory",
     description:
@@ -46,13 +52,12 @@ export const plantSymptomsResource = {
       priority: 0.6,
     },
   },
-  handler: async (uri: any) => {
+  handler: async (uri: { href: string }) => {
     const symptomsData = getAllSymptoms();
     return {
       contents: [
         {
           uri: uri.href,
-          mimeType: "application/json",
           text: JSON.stringify(symptomsData, null, 2),
         },
       ],

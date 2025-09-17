@@ -182,29 +182,29 @@ function getSeasonalCalendar(season: string, region: string) {
 }
 
 export const seasonalCalendarResource = {
-  template: new ResourceTemplate("plant://calendar/{season}/{region}", {
-    list: undefined,
+  template: new ResourceTemplate("empower://seasonal-calendar", {
+    list: async () => ({
+      resources: [
+        { uri: "empower://seasonal-calendar", name: "Seasonal Plant Calendar" },
+      ],
+    }),
   }),
   metadata: {
     title: "Seasonal Plant Calendar",
     description:
-      "Region-specific seasonal care calendars showing what plant care activities should be done each month",
+      "Seasonal care calendar showing what plant care activities should be done each month",
     annotations: {
       audience: ["user"],
       priority: 0.8,
     },
   },
-  handler: async (uri: any, variables: any) => {
-    const { season, region } = variables;
-    const calendarData = getSeasonalCalendar(
-      season as string,
-      region as string
-    );
+  handler: async (uri: { href: string }) => {
+    // Default to spring temperate calendar
+    const calendarData = getSeasonalCalendar("spring", "temperate");
     return {
       contents: [
         {
           uri: uri.href,
-          mimeType: "application/json",
           text: JSON.stringify(calendarData, null, 2),
         },
       ],

@@ -286,26 +286,28 @@ function getPlantDiagnosticData(symptom: string) {
 }
 
 export const plantDiagnosticsResource = {
-  template: new ResourceTemplate("plant://problems/{symptom}", {
-    list: undefined,
+  template: new ResourceTemplate("empower://plant-diagnostics", {
+    list: async () => ({
+      resources: [
+        {
+          uri: "empower://plant-diagnostics",
+          name: "Plant Problem Diagnostics",
+        },
+      ],
+    }),
   }),
   metadata: {
     title: "Plant Problem Diagnostics",
     description:
       "Detailed diagnostic information for common plant problems including causes, treatments, and prevention tips",
-    annotations: {
-      audience: ["user", "assistant"],
-      priority: 0.9,
-    },
   },
-  handler: async (uri: any, variables: any) => {
-    const { symptom } = variables;
-    const diagnosticData = getPlantDiagnosticData(symptom as string);
+  handler: async (uri: { href: string }) => {
+    // Default to yellowing leaves diagnosis
+    const diagnosticData = getPlantDiagnosticData("yellowing");
     return {
       contents: [
         {
           uri: uri.href,
-          mimeType: "application/json",
           text: JSON.stringify(diagnosticData, null, 2),
         },
       ],

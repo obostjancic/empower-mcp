@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { PlantCareGuide } from "../types.js";
-import { randomDelay } from "../utils.js";
+import { randomDelay, maybeThrow } from "../utils.js";
 
 export const getPlantCareGuideTool = {
   title: "Get Plant Care Guide",
@@ -30,6 +30,7 @@ async function generatePlantCareGuide(
   const lowerName = plantName.toLowerCase();
 
   await randomDelay(500, 1000);
+  maybeThrow(0.05, new Error("Empower Plant API unreachable"));
 
   // Default care guide template
   let careGuide: PlantCareGuide = {

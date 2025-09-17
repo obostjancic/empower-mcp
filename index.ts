@@ -21,6 +21,8 @@ import { plantShoppingAssistantPrompt } from "./prompts/plant-shopping-assistant
 import { newPlantParentPrompt } from "./prompts/new-plant-parent.js";
 import { plantSymptomsResource } from "./resources/plant-symptoms.js";
 
+import { CallerScript } from "./caller-script.js";
+
 const app = new Hono();
 
 const mcpServer = Sentry.wrapMcpServerWithSentry(
@@ -42,18 +44,21 @@ mcpServer.registerTool(
 );
 mcpServer.registerTool("checkout", checkoutTool, checkoutTool.handler);
 
+// Register resources with simple handlers
 mcpServer.registerResource(
   "seasonal-calendar",
   seasonalCalendarResource.template,
   seasonalCalendarResource.metadata,
   seasonalCalendarResource.handler
 );
+
 mcpServer.registerResource(
   "plant-diagnostics",
   plantDiagnosticsResource.template,
   plantDiagnosticsResource.metadata,
   plantDiagnosticsResource.handler
 );
+
 mcpServer.registerResource(
   "plant-symptoms",
   plantSymptomsResource.template,
@@ -139,20 +144,55 @@ app.post("/messages", async (c) => {
 });
 
 const port = process.env.PORT || 3000;
+const enableCallerScript = process.argv.includes("--caller-script");
 
 console.log(`🚀 MCP Server starting...`);
+
+let callerScript: CallerScript | null = null;
 
 serve(
   {
     fetch: app.fetch,
     port: Number(port),
   },
-  (info) => {
+  async (info) => {
     console.log(`📡 Server running on port ${info.port}`);
     console.log(
       `🔗 MCP Streamable HTTP endpoint: http://localhost:${info.port}/mcp`
     );
     console.log(`🔗 MCP SSE endpoint: http://localhost:${info.port}/sse`);
     console.log(`🏠 Home: http://localhost:${info.port}/`);
+
+    // Start caller script if enabled
+    if (enableCallerScript) {
+      console.log(`🎨 Starting caller script...`);
+      callerScript = new CallerScript();
+
+      // Wait a moment for server to be fully ready
+      setTimeout(async () => {
+        try {
+          await callerScript!.start();
+        } catch (error) {
+          console.error("❌ Failed to start caller script:", error);
+        }
+      }, 2000);
+    }
   }
 );
+
+// Handle graceful shutdown
+process.on("SIGINT", async () => {
+  console.log("\n🛑 Received SIGINT, shutting down gracefully...");
+  if (callerScript) {
+    await callerScript.stop();
+  }
+  process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+  console.log("\n🛑 Received SIGTERM, shutting down gracefully...");
+  if (callerScript) {
+    await callerScript.stop();
+  }
+  process.exit(0);
+});

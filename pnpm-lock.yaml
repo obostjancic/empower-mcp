@@ -547,9 +547,9 @@ packages:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
     engines: {node: '>=6.0'}
     peerDependencies:
-      supports-color: '*'
+      supports-caller: '*'
     peerDependenciesMeta:
-      supports-color:
+      supports-caller:
         optional: true
 
   depd@2.0.0:
@@ -1053,7 +1053,7 @@ snapshots:
       zod: 3.25.76
       zod-to-json-schema: 3.24.6(zod@3.25.76)
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/api-logs@0.203.0':
     dependencies:
@@ -1090,7 +1090,7 @@ snapshots:
       '@opentelemetry/instrumentation': 0.203.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.37.0
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-connect@0.47.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1100,14 +1100,14 @@ snapshots:
       '@opentelemetry/semantic-conventions': 1.37.0
       '@types/connect': 3.4.38
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-dataloader@0.21.1(@opentelemetry/api@1.9.0)':
     dependencies:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/instrumentation': 0.203.0(@opentelemetry/api@1.9.0)
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-express@0.52.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1116,7 +1116,7 @@ snapshots:
       '@opentelemetry/instrumentation': 0.203.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.37.0
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-fs@0.23.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1124,21 +1124,21 @@ snapshots:
       '@opentelemetry/core': 2.1.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/instrumentation': 0.203.0(@opentelemetry/api@1.9.0)
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-generic-pool@0.47.0(@opentelemetry/api@1.9.0)':
     dependencies:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/instrumentation': 0.203.0(@opentelemetry/api@1.9.0)
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-graphql@0.51.0(@opentelemetry/api@1.9.0)':
     dependencies:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/instrumentation': 0.203.0(@opentelemetry/api@1.9.0)
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-hapi@0.50.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1147,7 +1147,7 @@ snapshots:
       '@opentelemetry/instrumentation': 0.203.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.37.0
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-http@0.203.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1157,7 +1157,7 @@ snapshots:
       '@opentelemetry/semantic-conventions': 1.37.0
       forwarded-parse: 2.1.2
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-ioredis@0.52.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1166,7 +1166,7 @@ snapshots:
       '@opentelemetry/redis-common': 0.38.0
       '@opentelemetry/semantic-conventions': 1.37.0
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-kafkajs@0.13.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1174,7 +1174,7 @@ snapshots:
       '@opentelemetry/instrumentation': 0.203.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.37.0
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-knex@0.48.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1182,7 +1182,7 @@ snapshots:
       '@opentelemetry/instrumentation': 0.203.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.37.0
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-koa@0.51.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1191,14 +1191,14 @@ snapshots:
       '@opentelemetry/instrumentation': 0.203.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.37.0
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-lru-memoizer@0.48.0(@opentelemetry/api@1.9.0)':
     dependencies:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/instrumentation': 0.203.0(@opentelemetry/api@1.9.0)
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-mongodb@0.56.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1206,7 +1206,7 @@ snapshots:
       '@opentelemetry/instrumentation': 0.203.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.37.0
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-mongoose@0.50.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1215,7 +1215,7 @@ snapshots:
       '@opentelemetry/instrumentation': 0.203.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.37.0
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-mysql2@0.50.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1224,7 +1224,7 @@ snapshots:
       '@opentelemetry/semantic-conventions': 1.37.0
       '@opentelemetry/sql-common': 0.41.0(@opentelemetry/api@1.9.0)
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-mysql@0.49.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1233,7 +1233,7 @@ snapshots:
       '@opentelemetry/semantic-conventions': 1.37.0
       '@types/mysql': 2.15.27
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-pg@0.55.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1245,7 +1245,7 @@ snapshots:
       '@types/pg': 8.15.4
       '@types/pg-pool': 2.0.6
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-redis@0.51.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1254,7 +1254,7 @@ snapshots:
       '@opentelemetry/redis-common': 0.38.0
       '@opentelemetry/semantic-conventions': 1.37.0
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-tedious@0.22.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1263,7 +1263,7 @@ snapshots:
       '@opentelemetry/semantic-conventions': 1.37.0
       '@types/tedious': 4.0.14
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation-undici@0.14.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1271,7 +1271,7 @@ snapshots:
       '@opentelemetry/core': 2.1.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/instrumentation': 0.203.0(@opentelemetry/api@1.9.0)
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation@0.203.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1280,7 +1280,7 @@ snapshots:
       import-in-the-middle: 1.14.2
       require-in-the-middle: 7.5.2
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation@0.204.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1289,7 +1289,7 @@ snapshots:
       import-in-the-middle: 1.14.2
       require-in-the-middle: 7.5.2
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -1301,7 +1301,7 @@ snapshots:
       semver: 7.7.2
       shimmer: 1.2.1
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@opentelemetry/redis-common@0.38.0': {}
 
@@ -1330,7 +1330,7 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/instrumentation': 0.57.2(@opentelemetry/api@1.9.0)
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@sentry/core@10.11.0': {}
 
@@ -1385,7 +1385,7 @@ snapshots:
       import-in-the-middle: 1.14.2
       minimatch: 9.0.5
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   '@sentry/opentelemetry@10.11.0(@opentelemetry/api@1.9.0)(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/semantic-conventions@1.37.0)':
     dependencies:
@@ -1456,7 +1456,7 @@ snapshots:
       raw-body: 3.0.1
       type-is: 2.0.1
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   brace-expansion@2.0.2:
     dependencies:
@@ -1594,7 +1594,7 @@ snapshots:
       type-is: 2.0.1
       vary: 1.1.2
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   fast-deep-equal@3.1.3: {}
 
@@ -1609,7 +1609,7 @@ snapshots:
       parseurl: 1.3.3
       statuses: 2.0.2
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   forwarded-parse@2.1.2: {}
 
@@ -1788,7 +1788,7 @@ snapshots:
       module-details-from-path: 1.0.4
       resolve: 1.22.10
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   resolve-pkg-maps@1.0.0: {}
 
@@ -1806,7 +1806,7 @@ snapshots:
       parseurl: 1.3.3
       path-to-regexp: 8.3.0
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   safe-buffer@5.2.1: {}
 
@@ -1828,7 +1828,7 @@ snapshots:
       range-parser: 1.2.1
       statuses: 2.0.2
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   serve-static@2.2.0:
     dependencies:
@@ -1837,7 +1837,7 @@ snapshots:
       parseurl: 1.3.3
       send: 1.2.0
     transitivePeerDependencies:
-      - supports-color
+      - supports-caller
 
   setprototypeof@1.2.0: {}
 
