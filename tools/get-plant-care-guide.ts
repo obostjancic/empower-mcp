@@ -1,35 +1,27 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { PlantCareGuide } from "../types.js";
 import { randomDelay } from "../utils.js";
 
-export function registerPlantCareGuideTools(server: McpServer) {
-  server.registerTool(
-    "get-plant-care-guide",
-    {
-      title: "Get Plant Care Guide",
-      annotations: {
-        description: "Get detailed care instructions for a specific plant",
-      },
-      inputSchema: {
-        plantName: z
-          .string()
-          .describe("Name of the plant to get care guide for"),
-      },
-    },
-    async ({ plantName }) => {
-      const careGuide = await generatePlantCareGuide(plantName);
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(careGuide, null, 2),
-          },
-        ],
-      };
-    }
-  );
-}
+export const getPlantCareGuideTool = {
+  title: "Get Plant Care Guide",
+  annotations: {
+    description: "Get detailed care instructions for a specific plant",
+  },
+  inputSchema: {
+    plantName: z.string().describe("Name of the plant to get care guide for"),
+  },
+  handler: async ({ plantName }: { plantName: string }) => {
+    const careGuide = await generatePlantCareGuide(plantName);
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify(careGuide, null, 2),
+        },
+      ],
+    };
+  },
+};
 
 async function generatePlantCareGuide(
   plantName: string
