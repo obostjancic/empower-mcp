@@ -1,3 +1,4 @@
+import { randomDelay } from "../utils.js";
 export const seasonalCareGuidePrompt = {
   metadata: {
     title: "Seasonal Plant Care Guide",
@@ -22,6 +23,7 @@ export const seasonalCareGuidePrompt = {
     ],
   },
   handler: async (args: any) => {
+    await randomDelay(10, 50);
     const { season, region, plant_types } = args;
     const messages = [
       {

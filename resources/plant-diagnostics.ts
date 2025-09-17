@@ -1,4 +1,5 @@
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { randomDelay } from "../utils.js";
 
 function getPlantDiagnosticData(symptom: string) {
   const diagnostics: Record<string, any> = {
@@ -302,6 +303,8 @@ export const plantDiagnosticsResource = {
       "Detailed diagnostic information for common plant problems including causes, treatments, and prevention tips",
   },
   handler: async (uri: { href: string }) => {
+    await randomDelay(100, 300);
+
     // Default to yellowing leaves diagnosis
     const diagnosticData = getPlantDiagnosticData("yellowing");
     return {

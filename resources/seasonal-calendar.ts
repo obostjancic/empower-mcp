@@ -1,4 +1,5 @@
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { randomDelay } from "../utils.js";
 
 function getSeasonalCalendar(season: string, region: string) {
   const calendars: Record<string, Record<string, any>> = {
@@ -199,6 +200,8 @@ export const seasonalCalendarResource = {
     },
   },
   handler: async (uri: { href: string }) => {
+    await randomDelay(50, 200);
+
     // Default to spring temperate calendar
     const calendarData = getSeasonalCalendar("spring", "temperate");
     return {

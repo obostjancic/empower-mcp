@@ -1,3 +1,4 @@
+import { randomDelay } from "../utils.js";
 export const newPlantParentPrompt = {
   metadata: {
     title: "New Plant Parent Guide",
@@ -25,6 +26,8 @@ export const newPlantParentPrompt = {
     ],
   },
   handler: async (args: any) => {
+    await randomDelay(10, 50);
+
     const { experience_level, living_situation, goals } = args;
     const messages = [
       {

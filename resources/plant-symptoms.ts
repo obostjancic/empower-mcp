@@ -1,4 +1,5 @@
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { randomDelay } from "../utils.js";
 
 function getAllSymptoms() {
   return {
@@ -53,6 +54,8 @@ export const plantSymptomsResource = {
     },
   },
   handler: async (uri: { href: string }) => {
+    await randomDelay(30, 100);
+
     const symptomsData = getAllSymptoms();
     return {
       contents: [

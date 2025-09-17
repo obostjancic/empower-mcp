@@ -1,3 +1,4 @@
+import { randomDelay } from "../utils.js";
 export const plantShoppingAssistantPrompt = {
   metadata: {
     title: "Plant Shopping Assistant",
@@ -23,6 +24,8 @@ export const plantShoppingAssistantPrompt = {
     ],
   },
   handler: async (args: any) => {
+    await randomDelay(10, 50);
+
     const { needs, budget, plant_types } = args;
     const messages = [
       {
