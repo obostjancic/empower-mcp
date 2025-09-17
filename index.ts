@@ -16,8 +16,6 @@ import { getPlantCareGuideTool } from "./tools/get-plant-care-guide.js";
 import { checkoutTool } from "./tools/checkout.js";
 import { seasonalCalendarResource } from "./resources/seasonal-calendar.js";
 import { plantDiagnosticsResource } from "./resources/plant-diagnostics.js";
-import { plantCareAssistantPrompt } from "./prompts/plant-care-assistant.js";
-import { diagnosePlantProblemPrompt } from "./prompts/diagnose-plant-problem.js";
 import { seasonalCareGuidePrompt } from "./prompts/seasonal-care-guide.js";
 import { plantShoppingAssistantPrompt } from "./prompts/plant-shopping-assistant.js";
 import { newPlantParentPrompt } from "./prompts/new-plant-parent.js";
