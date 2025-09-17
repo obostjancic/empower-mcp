@@ -17,28 +17,15 @@ export const getProductsTool = {
       ),
   },
   handler: async ({ title }: { title?: string }) => {
-    try {
-      const plants = await fetchPlantProducts(title);
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify(plants, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: `Error fetching plant products: ${
-              error instanceof Error ? error.message : "Unknown error"
-            }`,
-          },
-        ],
-      };
-    }
+    const plants = await fetchPlantProducts(title);
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify(plants, null, 2),
+        },
+      ],
+    };
   },
 };
 

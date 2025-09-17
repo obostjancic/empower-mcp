@@ -57,59 +57,47 @@ export const checkoutTool = {
   },
   handler: async (args: any) => {
     maybeThrow(0.1, new Error("Empower Plant API unreachable"));
-    try {
-      const checkoutData: CheckoutRequest = {
-        cart: args.cart,
-        form: args.form,
-        validate_inventory: args.validate_inventory || "true",
-      };
 
-      const result = await processCheckout(checkoutData);
+    const checkoutData: CheckoutRequest = {
+      cart: args.cart,
+      form: args.form,
+      validate_inventory: args.validate_inventory || "true",
+    };
 
-      // Format response with clear structure
-      let responseText = "";
+    const result = await processCheckout(checkoutData);
 
-      if (result.success) {
-        responseText = `✅ CHECKOUT SUCCESSFUL\n\n`;
-        responseText += `📊 Request Summary:\n`;
-        responseText += `  • Customer: ${result.requestSummary.customerEmail}\n`;
-        responseText += `  • Items: ${result.requestSummary.itemCount}\n`;
-        responseText += `  • Total: $${result.requestSummary.cartTotal}\n\n`;
-        responseText += `🌐 Response Details:\n`;
-        responseText += `  • Status: ${result.status} ${result.statusText}\n\n`;
-        responseText += `📦 Response Data:\n`;
-        responseText += JSON.stringify(result.data, null, 2);
-      } else {
-        responseText = `❌ CHECKOUT FAILED\n\n`;
-        responseText += `📊 Request Summary:\n`;
-        responseText += `  • Customer: ${result.requestSummary.customerEmail}\n`;
-        responseText += `  • Items: ${result.requestSummary.itemCount}\n`;
-        responseText += `  • Total: $${result.requestSummary.cartTotal}\n\n`;
-        responseText += `🌐 Error Details:\n`;
-        responseText += `  • Status: ${result.status} ${result.statusText}\n`;
-        responseText += `  • Error: ${result.error}\n`;
-      }
+    // Format response with clear structure
+    let responseText = "";
 
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: responseText,
-          },
-        ],
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: `❌ UNEXPECTED ERROR\n\nFailed to process checkout request: ${
-              error instanceof Error ? error.message : "Unknown error"
-            }`,
-          },
-        ],
-      };
+    if (result.success) {
+      responseText = `✅ CHECKOUT SUCCESSFUL\n\n`;
+      responseText += `📊 Request Summary:\n`;
+      responseText += `  • Customer: ${result.requestSummary.customerEmail}\n`;
+      responseText += `  • Items: ${result.requestSummary.itemCount}\n`;
+      responseText += `  • Total: $${result.requestSummary.cartTotal}\n\n`;
+      responseText += `🌐 Response Details:\n`;
+      responseText += `  • Status: ${result.status} ${result.statusText}\n\n`;
+      responseText += `📦 Response Data:\n`;
+      responseText += JSON.stringify(result.data, null, 2);
+    } else {
+      responseText = `❌ CHECKOUT FAILED\n\n`;
+      responseText += `📊 Request Summary:\n`;
+      responseText += `  • Customer: ${result.requestSummary.customerEmail}\n`;
+      responseText += `  • Items: ${result.requestSummary.itemCount}\n`;
+      responseText += `  • Total: $${result.requestSummary.cartTotal}\n\n`;
+      responseText += `🌐 Error Details:\n`;
+      responseText += `  • Status: ${result.status} ${result.statusText}\n`;
+      responseText += `  • Error: ${result.error}\n`;
     }
+
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: responseText,
+        },
+      ],
+    };
   },
 };
 
