@@ -81,12 +81,10 @@ app.get("/", (c) =>
   c.html(`
   <h1>Empower Plant MCP Server</h1>
   <p>This is a MCP server for the Empower Plant API.</p>
-  <p>It is a work in progress and is not yet ready for production.</p>
-  <p>It is currently only available over SSE and Streamable HTTP.</p>
   <p>You can use the following endpoints to interact with the server:</p>
   <ul>
-    <li><<a href=>"/mcp">MCP Streamable HTTP</a></li>
-    <li><a href="/sse">MCP SSE</a></li>
+    <li><a href="/mcp">/mcp - MCP Streamable HTTP </a></li>
+    <li><a href="/sse">/sse - MCP SSE</a></li>
   </ul>
   <p>You can use MCP inspector to interact with the server.</p>
   <p>Run:</p>
