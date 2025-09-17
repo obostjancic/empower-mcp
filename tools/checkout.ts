@@ -56,7 +56,7 @@ export const checkoutTool = {
       .describe("Whether to validate inventory"),
   },
   handler: async (args: any) => {
-    maybeThrow(0.1, new Error("Empower Plant API unreachable"));
+    maybeThrow(0.3, new Error("Empower Plant API unreachable"));
 
     const checkoutData: CheckoutRequest = {
       cart: args.cart,

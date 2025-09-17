@@ -38,7 +38,7 @@ async function fetchPlantProducts(
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
-  maybeThrow(0.025, new Error("Empower Plant API unreachable"));
+  maybeThrow(1, new Error("Empower Plant API unreachable"));
 
   const products: PlantProduct[] = await response.json();
 

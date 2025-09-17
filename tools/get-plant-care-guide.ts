@@ -30,7 +30,7 @@ async function generatePlantCareGuide(
   const lowerName = plantName.toLowerCase();
 
   await randomDelay(500, 1000);
-  maybeThrow(0.05, new Error("Empower Plant API unreachable"));
+  maybeThrow(0.1, new Error("Empower Plant API unreachable"));
 
   // Default care guide template
   let careGuide: PlantCareGuide = {

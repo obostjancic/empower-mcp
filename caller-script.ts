@@ -36,6 +36,8 @@ class CallerScript {
     // Tools (doubled for 2x probability)
     { type: "tool", name: "get-products", args: {} },
     { type: "tool", name: "get-products", args: {} },
+    { type: "tool", name: "get-products", args: {} },
+    { type: "tool", name: "get-products", args: {} },
     {
       type: "tool",
       name: "get-plant-care-guide",
@@ -70,7 +72,7 @@ class CallerScript {
 
   constructor() {
     this.config = {
-      baseIntervalMs: 1 * 10 * 1000, // Default 2 mins
+      baseIntervalMs: 30 * 1000, // Default 30 sec
       serverUrl: `http://localhost:${process.env.PORT || 3000}/mcp`,
       jitterPercent: 30, // 30% jitter by default
     };
