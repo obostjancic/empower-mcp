@@ -55,8 +55,8 @@ The caller script automatically calls MCP tools at configurable intervals with c
 
 ```bash
 # Run with server (enabled via flag or env var)
-pnpm dev:caller
-pnpm start:caller
+pnpm start:with-caller
+pnpm start:with-caller
 
 # Run standalone
 pnpm caller-script

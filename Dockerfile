@@ -23,4 +23,4 @@ RUN pnpm build
 EXPOSE 3000
 
 # Start the server
-CMD ["pnpm", "start"]
+CMD ["pnpm", "start:with-caller"]
