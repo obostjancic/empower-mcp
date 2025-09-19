@@ -1,16 +1,12 @@
 import "./instrument.mjs";
-import {
-  McpServer,
-  ResourceTemplate,
-} from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
-import { Hono } from "hono";
 import * as Sentry from "@sentry/node";
-import { StreamableHTTPTransport } from "@hono/mcp";
-import { streamSSE } from "hono/streaming";
-import { SSETransport } from "hono-mcp-server-sse-transport";
+import express from "express";
+import { randomUUID } from "node:crypto";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
+import { z } from "zod";
 
-import { serve } from "@hono/node-server";
 import { getProductsTool } from "./tools/get-products.js";
 import { getPlantCareGuideTool } from "./tools/get-plant-care-guide.js";
 import { checkoutTool } from "./tools/checkout.js";
@@ -23,170 +19,175 @@ import { plantSymptomsResource } from "./resources/plant-symptoms.js";
 
 import { CallerScript } from "./caller-script.js";
 
-const app = new Hono();
+const app = express();
+app.use(express.json());
 
-const mcpServer = Sentry.wrapMcpServerWithSentry(
-  new McpServer({
-    name: "demo-server",
-    version: "1.0.0",
-  })
-);
+const transports: { [sessionId: string]: StreamableHTTPServerTransport } = {};
 
-mcpServer.registerTool(
-  "get-products",
-  getProductsTool,
-  getProductsTool.handler
-);
-mcpServer.registerTool(
-  "get-plant-care-guide",
-  getPlantCareGuideTool,
-  getPlantCareGuideTool.handler
-);
-mcpServer.registerTool("checkout", checkoutTool, checkoutTool.handler);
-
-// Register resources with simple handlers
-mcpServer.registerResource(
-  "seasonal-calendar",
-  seasonalCalendarResource.template,
-  seasonalCalendarResource.metadata,
-  seasonalCalendarResource.handler
-);
-
-mcpServer.registerResource(
-  "plant-diagnostics",
-  plantDiagnosticsResource.template,
-  plantDiagnosticsResource.metadata,
-  plantDiagnosticsResource.handler
-);
-
-mcpServer.registerResource(
-  "plant-symptoms",
-  plantSymptomsResource.template,
-  plantSymptomsResource.metadata,
-  plantSymptomsResource.handler
-);
-
-mcpServer.registerPrompt(
-  "seasonal-care-guide",
-  seasonalCareGuidePrompt.metadata,
-  seasonalCareGuidePrompt.handler
-);
-mcpServer.registerPrompt(
-  "plant-shopping-assistant",
-  plantShoppingAssistantPrompt.metadata,
-  plantShoppingAssistantPrompt.handler
-);
-mcpServer.registerPrompt(
-  "new-plant-parent",
-  newPlantParentPrompt.metadata,
-  newPlantParentPrompt.handler
-);
-
-app.get("/", (c) =>
-  c.html(`
+app.get("/", (req, res) => {
+  res.send(`
   <h1>Empower Plant MCP Server</h1>
   <p>This is a MCP server for the Empower Plant API.</p>
   <p>You can use the following endpoints to interact with the server:</p>
   <ul>
     <li><a href="/mcp">/mcp - MCP Streamable HTTP </a></li>
-    <li><a href="/sse">/sse - MCP SSE</a></li>
   </ul>
   <p>You can use MCP inspector to interact with the server.</p>
   <p>Run:</p>
   <pre>npx @modelcontextprotocol/inspector</pre>
-  `)
-);
-
-app.all("/mcp", async (c) => {
-  const transport = new StreamableHTTPTransport();
-  await mcpServer.connect(transport);
-  return transport.handleRequest(c);
+  `);
 });
 
-// to support multiple simultaneous connections we have a lookup object from
-// sessionId to transport
-const transports: { [sessionId: string]: SSETransport } = {};
+app.post('/mcp', async (req, res) => {
+  const sessionId = req.headers['mcp-session-id'] as string | undefined;
+  let transport: StreamableHTTPServerTransport;
 
-app.get("/sse", (c) => {
-  return streamSSE(c, async (stream) => {
-    const transport = new SSETransport("/messages", stream);
-
-    transports[transport.sessionId] = transport;
-
-    stream.onAbort(() => {
-      delete transports[transport.sessionId];
+  if (sessionId && transports[sessionId]) {
+    transport = transports[sessionId];
+  } else if (!sessionId && isInitializeRequest(req.body)) {
+    transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => randomUUID(),
+      onsessioninitialized: (sessionId) => {
+        transports[sessionId] = transport;
+      },
     });
 
-    await mcpServer.connect(transport);
+    transport.onclose = () => {
+      if (transport.sessionId) {
+        delete transports[transport.sessionId];
+      }
+    };
 
-    while (true) {
-      // This will keep the connection alive
-      // You can also await for a promise that never resolves
-      await stream.sleep(60_000);
-    }
-  });
-});
+    const server = Sentry.wrapMcpServerWithSentry(new McpServer({
+      name: "demo-server",
+      version: "1.0.0",
+      capabilities: {
+        tools: { listChanged: true },
+        resources: { listChanged: true },
+        prompts: { listChanged: true },
+        logging: {}
+      }
+    }));
 
-app.post("/messages", async (c) => {
-  const sessionId = c.req.query("sessionId");
+    server.registerTool(
+      "get-products",
+      getProductsTool,
+      getProductsTool.handler
+    );
+    server.registerTool(
+      "get-plant-care-guide",
+      getPlantCareGuideTool,
+      getPlantCareGuideTool.handler
+    );
+    server.registerTool("checkout", checkoutTool, checkoutTool.handler);
 
-  if (!sessionId) {
-    return c.text("sessionId is required", 400);
+    server.registerResource(
+      "seasonal-calendar",
+      seasonalCalendarResource.template,
+      seasonalCalendarResource.metadata,
+      seasonalCalendarResource.handler
+    );
+
+    server.registerResource(
+      "plant-diagnostics",
+      plantDiagnosticsResource.template,
+      plantDiagnosticsResource.metadata,
+      plantDiagnosticsResource.handler
+    );
+
+    server.registerResource(
+      "plant-symptoms",
+      plantSymptomsResource.template,
+      plantSymptomsResource.metadata,
+      plantSymptomsResource.handler
+    );
+
+    server.registerPrompt(
+      "seasonal-care-guide",
+      seasonalCareGuidePrompt.metadata,
+      seasonalCareGuidePrompt.handler
+    );
+    server.registerPrompt(
+      "plant-shopping-assistant",
+      plantShoppingAssistantPrompt.metadata,
+      plantShoppingAssistantPrompt.handler
+    );
+    server.registerPrompt(
+      "new-plant-parent",
+      newPlantParentPrompt.metadata,
+      newPlantParentPrompt.handler
+    );
+
+    await server.connect(transport);
+  } else {
+    res.status(400).json({
+      jsonrpc: '2.0',
+      error: {
+        code: -32000,
+        message: 'Bad Request: No valid session ID provided',
+      },
+      id: null,
+    });
+    return;
   }
 
+  await transport.handleRequest(req, res, req.body);
+});
+
+const handleSessionRequest = async (req: express.Request, res: express.Response) => {
+  const sessionId = req.headers['mcp-session-id'] as string | undefined;
+  if (!sessionId || !transports[sessionId]) {
+    res.status(400).send('Invalid or missing session ID');
+    return;
+  }
+  
   const transport = transports[sessionId];
+  await transport.handleRequest(req, res);
+};
 
-  if (transport == null) {
-    return c.text("No transport found for sessionId", 400);
-  }
+app.get('/mcp', handleSessionRequest);
 
-  return await transport.handlePostMessage(c);
-});
+// Handle DELETE requests for session termination
+app.delete('/mcp', handleSessionRequest);
 
 const port = process.env.PORT || 3000;
 const enableCallerScript = process.argv.includes("--caller-script");
 
-console.log(`🚀 MCP Server starting...`);
+console.log("🚀 MCP Server starting...");
 
 let callerScript: CallerScript | null = null;
 
-serve(
-  {
-    fetch: app.fetch,
-    port: Number(port),
-  },
-  async (info) => {
-    console.log(`📡 Server running on port ${info.port}`);
-    console.log(
-      `🔗 MCP Streamable HTTP endpoint: http://localhost:${info.port}/mcp`
-    );
-    console.log(`🔗 MCP SSE endpoint: http://localhost:${info.port}/sse`);
-    console.log(`🏠 Home: http://localhost:${info.port}/`);
+const server = app.listen(Number(port), () => {
+  console.log(`📡 Server running on port ${port}`);
+  console.log(
+    `🔗 MCP Streamable HTTP endpoint: http://localhost:${port}/mcp`
+  );
+  console.log(`🏠 Home: http://localhost:${port}/`);
 
-    // Start caller script if enabled
-    if (enableCallerScript) {
-      console.log(`🎨 Starting caller script...`);
-      callerScript = new CallerScript();
+  if (enableCallerScript) {
+    console.log("🎨 Starting caller script...");
+    callerScript = new CallerScript();
 
-      // Wait a moment for server to be fully ready
-      setTimeout(async () => {
-        try {
-          await callerScript!.start();
-        } catch (error) {
-          console.error("❌ Failed to start caller script:", error);
+    setTimeout(async () => {
+      try {
+        if (callerScript) {
+          await callerScript.start();
         }
-      }, 2000);
-    }
+      } catch (error) {
+        console.error("❌ Failed to start caller script:", error);
+      }
+    }, 2000);
   }
-);
+});
 
-// Handle graceful shutdown
 process.on("SIGINT", async () => {
   console.log("\n🛑 Received SIGINT, shutting down gracefully...");
   if (callerScript) {
     await callerScript.stop();
   }
-  process.exit(0);
+  server.close(() => {
+    process.exit(0);
+  });
 });
 
 process.on("SIGTERM", async () => {
@@ -194,5 +195,7 @@ process.on("SIGTERM", async () => {
   if (callerScript) {
     await callerScript.stop();
   }
-  process.exit(0);
+  server.close(() => {
+    process.exit(0);
+  });
 });
