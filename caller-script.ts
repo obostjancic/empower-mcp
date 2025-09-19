@@ -1,7 +1,12 @@
+// For Node.js EventSource support
+import { EventSource } from "eventsource";
+
 interface CallerScriptConfig {
   baseIntervalMs: number;
   serverUrl: string;
+  sseUrl: string;
   jitterPercent: number; // 0-100, percentage of jitter to add
+  sseUsagePercent: number; // 0-100, percentage of requests to use SSE
 }
 
 interface McpItem {
@@ -62,10 +67,14 @@ class CallerScript {
     // Resources (normal probability)
     { type: "resource", name: "seasonal-calendar", args: {} },
     { type: "resource", name: "plant-diagnostics", args: {} },
+    { type: "resource", name: "plant-diagnostics", args: {} },
+    { type: "resource", name: "plant-symptoms", args: {} },
+    { type: "resource", name: "plant-symptoms", args: {} },
     { type: "resource", name: "plant-symptoms", args: {} },
 
     // Prompts (normal probability)
     { type: "prompt", name: "seasonal-care-guide", args: {} },
+    { type: "prompt", name: "plant-shopping-assistant", args: {} },
     { type: "prompt", name: "plant-shopping-assistant", args: {} },
     { type: "prompt", name: "new-plant-parent", args: {} },
   ];
@@ -74,16 +83,20 @@ class CallerScript {
     this.config = {
       baseIntervalMs: 30 * 1000, // Default 30 sec
       serverUrl: `http://localhost:${process.env.PORT || 3000}/mcp`,
+      sseUrl: `http://localhost:${process.env.PORT || 3000}/sse`,
       jitterPercent: 30, // 30% jitter by default
+      sseUsagePercent: 25, // 25% of requests use SSE
     };
   }
 
   async start(): Promise<void> {
     try {
       console.log("🎨 Starting caller script...");
-      console.log(`📡 Server URL: ${this.config.serverUrl}`);
+      console.log(`📡 HTTP URL: ${this.config.serverUrl}`);
+      console.log(`🌊 SSE URL: ${this.config.sseUrl}`);
       console.log(`⏱️  Base interval: ${this.config.baseIntervalMs}ms`);
       console.log(`🎯 Jitter: ±${this.config.jitterPercent}%`);
+      console.log(`📡 SSE usage: ${this.config.sseUsagePercent}%`);
       console.log(
         `🎲 Available items: ${this.availableItems.length} (tools, resources, prompts)`
       );
@@ -159,7 +172,11 @@ class CallerScript {
     }
   }
 
-  private async sendMcpRequest(request: McpRequest): Promise<McpResponse> {
+  private shouldUseSSE(): boolean {
+    return Math.random() * 100 < this.config.sseUsagePercent;
+  }
+
+  private async sendMcpRequestHttp(request: McpRequest): Promise<McpResponse> {
     const response = await fetch(this.config.serverUrl, {
       method: "POST",
       headers: {
@@ -183,6 +200,50 @@ class CallerScript {
 
     // Handle regular JSON response
     return JSON.parse(responseText) as McpResponse;
+  }
+
+  private async sendMcpRequestSSE(request: McpRequest): Promise<McpResponse> {
+    return new Promise((resolve, reject) => {
+      const eventSource = new EventSource(
+        `${this.config.sseUrl}?${new URLSearchParams({
+          request: JSON.stringify(request),
+        })}`
+      );
+
+      const timeout = setTimeout(() => {
+        eventSource.close();
+        reject(new Error("SSE request timeout"));
+      }, 30000); // 30 second timeout
+
+      eventSource.onmessage = (event) => {
+        try {
+          clearTimeout(timeout);
+          eventSource.close();
+          const response = JSON.parse(event.data) as McpResponse;
+          resolve(response);
+        } catch (error) {
+          clearTimeout(timeout);
+          eventSource.close();
+          reject(new Error(`Failed to parse SSE response: ${error}`));
+        }
+      };
+
+      eventSource.onerror = (error) => {
+        clearTimeout(timeout);
+        eventSource.close();
+        reject(new Error(`SSE connection error: ${error}`));
+      };
+    });
+  }
+
+  private async sendMcpRequest(request: McpRequest): Promise<McpResponse> {
+    const useSSE = this.shouldUseSSE();
+
+    if (useSSE) {
+      return this.sendMcpRequestSSE(request);
+    } else {
+      return this.sendMcpRequestHttp(request);
+    }
   }
 
   private getRandomItem(): McpItem {
@@ -264,9 +325,12 @@ class CallerScript {
       const item = this.getRandomItem();
       const timestamp = new Date().toISOString();
       const emoji = this.getEmojiForType(item.type);
+      const useSSE = this.shouldUseSSE();
+      const transportEmoji = useSSE ? "🌊" : "📡";
+      const transportName = useSSE ? "SSE" : "HTTP";
 
       console.log(
-        `\n${emoji} [${timestamp}] Calling ${item.type}: ${item.name}`
+        `\n${emoji} [${timestamp}] ${transportEmoji} ${transportName} - Calling ${item.type}: ${item.name}`
       );
 
       const method = this.getMethodForType(item.type);
@@ -280,7 +344,9 @@ class CallerScript {
             : { name: item.name, arguments: item.args || {} },
       };
 
-      const response = await this.sendMcpRequest(mcpRequest);
+      const response = useSSE
+        ? await this.sendMcpRequestSSE(mcpRequest)
+        : await this.sendMcpRequestHttp(mcpRequest);
 
       if (response.error) {
         console.log(`❌ Failed - ${response.error.message}`);

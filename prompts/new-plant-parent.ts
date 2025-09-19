@@ -26,7 +26,7 @@ export const newPlantParentPrompt = {
     ],
   },
   handler: async (args: any) => {
-    await randomDelay(10, 50);
+    await randomDelay(20, 70);
 
     const { experience_level, living_situation, goals } = args;
     const messages = [

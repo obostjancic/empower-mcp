@@ -23,7 +23,7 @@ export const seasonalCareGuidePrompt = {
     ],
   },
   handler: async (args: any) => {
-    await randomDelay(10, 50);
+    await randomDelay(5, 30);
     const { season, region, plant_types } = args;
     const messages = [
       {
