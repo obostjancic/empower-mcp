@@ -204,35 +204,119 @@ class CallerScript {
 
   private async sendMcpRequestSSE(request: McpRequest): Promise<McpResponse> {
     return new Promise((resolve, reject) => {
-      const eventSource = new EventSource(
-        `${this.config.sseUrl}?${new URLSearchParams({
-          request: JSON.stringify(request),
-        })}`
-      );
+      let eventSource: EventSource | null = null;
+      let sessionId: string | null = null;
+      let hasReceivedResponse = false;
+      let connectionEstablished = false;
 
-      const timeout = setTimeout(() => {
-        eventSource.close();
-        reject(new Error("SSE request timeout"));
-      }, 30000); // 30 second timeout
-
-      eventSource.onmessage = (event) => {
-        try {
-          clearTimeout(timeout);
+      const cleanup = () => {
+        if (eventSource) {
           eventSource.close();
-          const response = JSON.parse(event.data) as McpResponse;
-          resolve(response);
-        } catch (error) {
-          clearTimeout(timeout);
-          eventSource.close();
-          reject(new Error(`Failed to parse SSE response: ${error}`));
+          eventSource = null;
         }
       };
 
-      eventSource.onerror = (error) => {
+      const timeout = setTimeout(() => {
+        if (!hasReceivedResponse) {
+          cleanup();
+          reject(new Error("SSE request timeout"));
+        }
+      }, 45000); // Reduced timeout for deployment environments
+
+      try {
+        eventSource = new EventSource(this.config.sseUrl);
+
+        eventSource.onopen = () => {
+          connectionEstablished = true;
+          console.log("🌊 SSE connection opened");
+        };
+
+        eventSource.onmessage = async (event) => {
+          try {
+            // First, try to extract sessionId from event stream
+            if (!sessionId && event.data) {
+              // Look for sessionId in the data
+              const lines = event.data.split("\n");
+              for (const line of lines) {
+                if (line.includes("sessionId")) {
+                  const match = line.match(/"sessionId":\s*"([^"]+)"/);
+                  if (match) {
+                    sessionId = match[1];
+                    console.log(`🔑 Extracted sessionId: ${sessionId}`);
+                    break;
+                  }
+                }
+              }
+            }
+
+            // If we have a sessionId and haven't sent the request yet, send it
+            if (sessionId && !hasReceivedResponse) {
+              try {
+                const baseUrl = this.config.sseUrl.replace("/sse", "");
+                const response = await fetch(
+                  `${baseUrl}/messages?sessionId=${sessionId}`,
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(request),
+                  }
+                );
+
+                if (!response.ok) {
+                  throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                console.log("📤 Request sent to /messages endpoint");
+              } catch (error) {
+                clearTimeout(timeout);
+                cleanup();
+                reject(new Error(`Failed to send message: ${error}`));
+                return;
+              }
+            }
+
+            // Try to parse as JSON response
+            try {
+              const data = JSON.parse(event.data);
+              if (
+                data.jsonrpc &&
+                data.id === request.id &&
+                !hasReceivedResponse
+              ) {
+                hasReceivedResponse = true;
+                clearTimeout(timeout);
+                cleanup();
+                resolve(data as McpResponse);
+                return;
+              }
+            } catch {
+              // Not JSON, might be session establishment or other data
+            }
+          } catch (error) {
+            if (!hasReceivedResponse) {
+              clearTimeout(timeout);
+              cleanup();
+              reject(new Error(`Failed to process SSE message: ${error}`));
+            }
+          }
+        };
+
+        eventSource.onerror = (error) => {
+          console.log(`🚨 SSE error: ${JSON.stringify(error)}`);
+          if (!hasReceivedResponse) {
+            clearTimeout(timeout);
+            cleanup();
+            // In deployment environments, fall back to HTTP on SSE failure
+            console.log("🔄 SSE failed, falling back to HTTP");
+            this.sendMcpRequestHttp(request).then(resolve).catch(reject);
+          }
+        };
+      } catch (error) {
         clearTimeout(timeout);
-        eventSource.close();
-        reject(new Error(`SSE connection error: ${error}`));
-      };
+        cleanup();
+        reject(new Error(`Failed to establish SSE connection: ${error}`));
+      }
     });
   }
 
