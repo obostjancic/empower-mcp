@@ -1,12 +1,7 @@
-// For Node.js EventSource support
-import { EventSource } from "eventsource";
-
 interface CallerScriptConfig {
   baseIntervalMs: number;
   serverUrl: string;
-  sseUrl: string;
   jitterPercent: number; // 0-100, percentage of jitter to add
-  sseUsagePercent: number; // 0-100, percentage of requests to use SSE
 }
 
 interface McpItem {
@@ -37,6 +32,7 @@ class CallerScript {
   private config: CallerScriptConfig;
   private intervalId: NodeJS.Timeout | null = null;
   private requestId: number = 1;
+  private sessionId: string | null = null;
   private availableItems: McpItem[] = [
     // Tools (doubled for 2x probability)
     { type: "tool", name: "get-products", args: {} },
@@ -63,6 +59,11 @@ class CallerScript {
       name: "checkout",
       args: { items: [{ productId: 3, quantity: 1 }] },
     },
+    {
+      type: "tool",
+      name: "always-error",
+      args: { message: "This tool always throws an error" },
+    },
 
     // Resources (normal probability)
     { type: "resource", name: "seasonal-calendar", args: {} },
@@ -81,11 +82,9 @@ class CallerScript {
 
   constructor() {
     this.config = {
-      baseIntervalMs: 30 * 1000, // Default 30 sec
+      baseIntervalMs: 1 * 1000, // Default 30 sec
       serverUrl: `http://localhost:${process.env.PORT || 3000}/mcp`,
-      sseUrl: `http://localhost:${process.env.PORT || 3000}/sse`,
       jitterPercent: 30, // 30% jitter by default
-      sseUsagePercent: 25, // 25% of requests use SSE
     };
   }
 
@@ -93,10 +92,8 @@ class CallerScript {
     try {
       console.log("🎨 Starting caller script...");
       console.log(`📡 HTTP URL: ${this.config.serverUrl}`);
-      console.log(`🌊 SSE URL: ${this.config.sseUrl}`);
       console.log(`⏱️  Base interval: ${this.config.baseIntervalMs}ms`);
       console.log(`🎯 Jitter: ±${this.config.jitterPercent}%`);
-      console.log(`📡 SSE usage: ${this.config.sseUsagePercent}%`);
       console.log(
         `🎲 Available items: ${this.availableItems.length} (tools, resources, prompts)`
       );
@@ -143,9 +140,37 @@ class CallerScript {
     console.log("🛑 Caller script stopped");
   }
 
+  private getRandomClientInfo() {
+    const clientInfoOptions = [
+      {
+        name: "empower-mobile-app",
+        title: "Empower Mobile App",
+        version: "2.1.3",
+      },
+      {
+        name: "empower-web-client",
+        title: "Empower Web Portal",
+        version: "1.5.0",
+      },
+      {
+        name: "empower-bot",
+        title: "Empower Assistant Bot",
+        version: "3.0.1",
+      },
+    ];
+    return clientInfoOptions[
+      Math.floor(Math.random() * clientInfoOptions.length)
+    ];
+  }
+
   private async testConnection(): Promise<void> {
     try {
       // Test if the MCP server is responding by calling initialize
+      const clientInfo = this.getRandomClientInfo();
+      console.log(
+        `🤖 Using client: ${clientInfo.title} (${clientInfo.name} v${clientInfo.version})`
+      );
+
       const initRequest: McpRequest = {
         jsonrpc: "2.0",
         id: this.requestId++,
@@ -153,10 +178,7 @@ class CallerScript {
         params: {
           protocolVersion: "2024-11-05",
           capabilities: {},
-          clientInfo: {
-            name: "caller-script-client",
-            version: "1.0.0",
-          },
+          clientInfo,
         },
       };
 
@@ -165,6 +187,7 @@ class CallerScript {
       if (response.error) {
         throw new Error(`MCP initialize failed: ${response.error.message}`);
       }
+
       console.log("🔗 Connected to MCP server");
     } catch (error) {
       console.error("❌ Failed to connect to MCP server:", error);
@@ -172,19 +195,31 @@ class CallerScript {
     }
   }
 
-  private shouldUseSSE(): boolean {
-    return Math.random() * 100 < this.config.sseUsagePercent;
-  }
-
   private async sendMcpRequestHttp(request: McpRequest): Promise<McpResponse> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "application/json, text/event-stream",
+    };
+
+    // Include session ID header for non-initialize requests
+    if (this.sessionId && request.method !== "initialize") {
+      headers["mcp-session-id"] = this.sessionId;
+    }
+
     const response = await fetch(this.config.serverUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json, text/event-stream",
-      },
+      headers,
       body: JSON.stringify(request),
     });
+
+    // Capture session ID from response header (for initialize requests)
+    if (request.method === "initialize") {
+      const sessionIdHeader = response.headers.get("mcp-session-id");
+      if (sessionIdHeader) {
+        this.sessionId = sessionIdHeader;
+        console.log(`🔑 Captured session ID from header: ${this.sessionId}`);
+      }
+    }
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -202,132 +237,8 @@ class CallerScript {
     return JSON.parse(responseText) as McpResponse;
   }
 
-  private async sendMcpRequestSSE(request: McpRequest): Promise<McpResponse> {
-    return new Promise((resolve, reject) => {
-      let eventSource: EventSource | null = null;
-      let sessionId: string | null = null;
-      let hasReceivedResponse = false;
-      let connectionEstablished = false;
-
-      const cleanup = () => {
-        if (eventSource) {
-          eventSource.close();
-          eventSource = null;
-        }
-      };
-
-      const timeout = setTimeout(() => {
-        if (!hasReceivedResponse) {
-          cleanup();
-          reject(new Error("SSE request timeout"));
-        }
-      }, 45000); // Reduced timeout for deployment environments
-
-      try {
-        eventSource = new EventSource(this.config.sseUrl);
-
-        eventSource.onopen = () => {
-          connectionEstablished = true;
-          console.log("🌊 SSE connection opened");
-        };
-
-        eventSource.onmessage = async (event) => {
-          try {
-            // First, try to extract sessionId from event stream
-            if (!sessionId && event.data) {
-              // Look for sessionId in the data
-              const lines = event.data.split("\n");
-              for (const line of lines) {
-                if (line.includes("sessionId")) {
-                  const match = line.match(/"sessionId":\s*"([^"]+)"/);
-                  if (match) {
-                    sessionId = match[1];
-                    console.log(`🔑 Extracted sessionId: ${sessionId}`);
-                    break;
-                  }
-                }
-              }
-            }
-
-            // If we have a sessionId and haven't sent the request yet, send it
-            if (sessionId && !hasReceivedResponse) {
-              try {
-                const baseUrl = this.config.sseUrl.replace("/sse", "");
-                const response = await fetch(
-                  `${baseUrl}/messages?sessionId=${sessionId}`,
-                  {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(request),
-                  }
-                );
-
-                if (!response.ok) {
-                  throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                console.log("📤 Request sent to /messages endpoint");
-              } catch (error) {
-                clearTimeout(timeout);
-                cleanup();
-                reject(new Error(`Failed to send message: ${error}`));
-                return;
-              }
-            }
-
-            // Try to parse as JSON response
-            try {
-              const data = JSON.parse(event.data);
-              if (
-                data.jsonrpc &&
-                data.id === request.id &&
-                !hasReceivedResponse
-              ) {
-                hasReceivedResponse = true;
-                clearTimeout(timeout);
-                cleanup();
-                resolve(data as McpResponse);
-                return;
-              }
-            } catch {
-              // Not JSON, might be session establishment or other data
-            }
-          } catch (error) {
-            if (!hasReceivedResponse) {
-              clearTimeout(timeout);
-              cleanup();
-              reject(new Error(`Failed to process SSE message: ${error}`));
-            }
-          }
-        };
-
-        eventSource.onerror = (error) => {
-          console.log(`🚨 SSE error: ${JSON.stringify(error)}`);
-          if (!hasReceivedResponse) {
-            clearTimeout(timeout);
-            cleanup();
-            // In deployment environments, fall back to HTTP on SSE failure
-            console.log("🔄 SSE failed, falling back to HTTP");
-            this.sendMcpRequestHttp(request).then(resolve).catch(reject);
-          }
-        };
-      } catch (error) {
-        clearTimeout(timeout);
-        cleanup();
-        reject(new Error(`Failed to establish SSE connection: ${error}`));
-      }
-    });
-  }
-
   private async sendMcpRequest(request: McpRequest): Promise<McpResponse> {
-    const useSSE = this.shouldUseSSE();
-
-    if (useSSE) {
-      return this.sendMcpRequestSSE(request);
-    } else {
-      return this.sendMcpRequestHttp(request);
-    }
+    return this.sendMcpRequestHttp(request);
   }
 
   private getRandomItem(): McpItem {
@@ -409,12 +320,9 @@ class CallerScript {
       const item = this.getRandomItem();
       const timestamp = new Date().toISOString();
       const emoji = this.getEmojiForType(item.type);
-      const useSSE = this.shouldUseSSE();
-      const transportEmoji = useSSE ? "🌊" : "📡";
-      const transportName = useSSE ? "SSE" : "HTTP";
 
       console.log(
-        `\n${emoji} [${timestamp}] ${transportEmoji} ${transportName} - Calling ${item.type}: ${item.name}`
+        `\n${emoji} [${timestamp}] - Calling ${item.type}: ${item.name}`
       );
 
       const method = this.getMethodForType(item.type);
@@ -428,9 +336,7 @@ class CallerScript {
             : { name: item.name, arguments: item.args || {} },
       };
 
-      const response = useSSE
-        ? await this.sendMcpRequestSSE(mcpRequest)
-        : await this.sendMcpRequestHttp(mcpRequest);
+      const response = await this.sendMcpRequestHttp(mcpRequest);
 
       if (response.error) {
         console.log(`❌ Failed - ${response.error.message}`);

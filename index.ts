@@ -10,6 +10,7 @@ import { z } from "zod";
 import { getProductsTool } from "./tools/get-products.js";
 import { getPlantCareGuideTool } from "./tools/get-plant-care-guide.js";
 import { checkoutTool } from "./tools/checkout.js";
+import { alwaysErrorTool } from "./tools/always-error.js";
 import { seasonalCalendarResource } from "./resources/seasonal-calendar.js";
 import { plantDiagnosticsResource } from "./resources/plant-diagnostics.js";
 import { seasonalCareGuidePrompt } from "./prompts/seasonal-care-guide.js";
@@ -80,6 +81,7 @@ app.post('/mcp', async (req, res) => {
       getPlantCareGuideTool.handler
     );
     server.registerTool("checkout", checkoutTool, checkoutTool.handler);
+    server.registerTool("always-error", alwaysErrorTool, alwaysErrorTool.handler);
 
     server.registerResource(
       "seasonal-calendar",
