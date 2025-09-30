@@ -39,8 +39,8 @@ app.get("/", (req, res) => {
   `);
 });
 
-app.post('/mcp', async (req, res) => {
-  const sessionId = req.headers['mcp-session-id'] as string | undefined;
+app.post("/mcp", async (req, res) => {
+  const sessionId = req.headers["mcp-session-id"] as string | undefined;
   let transport: StreamableHTTPServerTransport;
 
   if (sessionId && transports[sessionId]) {
@@ -59,16 +59,18 @@ app.post('/mcp', async (req, res) => {
       }
     };
 
-    const server = Sentry.wrapMcpServerWithSentry(new McpServer({
-      name: "demo-server",
-      version: "1.0.0",
-      capabilities: {
-        tools: { listChanged: true },
-        resources: { listChanged: true },
-        prompts: { listChanged: true },
-        logging: {}
-      }
-    }));
+    const server = Sentry.wrapMcpServerWithSentry(
+      new McpServer({
+        name: "demo-server",
+        version: "1.0.0",
+        capabilities: {
+          tools: { listChanged: true },
+          resources: { listChanged: true },
+          prompts: { listChanged: true },
+          logging: {},
+        },
+      })
+    );
 
     server.registerTool(
       "get-products",
@@ -81,7 +83,11 @@ app.post('/mcp', async (req, res) => {
       getPlantCareGuideTool.handler
     );
     server.registerTool("checkout", checkoutTool, checkoutTool.handler);
-    server.registerTool("always-error", alwaysErrorTool, alwaysErrorTool.handler);
+    server.registerTool(
+      "always-error",
+      alwaysErrorTool,
+      alwaysErrorTool.handler
+    );
 
     server.registerResource(
       "seasonal-calendar",
@@ -123,10 +129,10 @@ app.post('/mcp', async (req, res) => {
     await server.connect(transport);
   } else {
     res.status(400).json({
-      jsonrpc: '2.0',
+      jsonrpc: "2.0",
       error: {
         code: -32000,
-        message: 'Bad Request: No valid session ID provided',
+        message: "Bad Request: No valid session ID provided",
       },
       id: null,
     });
@@ -134,23 +140,34 @@ app.post('/mcp', async (req, res) => {
   }
 
   await transport.handleRequest(req, res, req.body);
+
+  // 20% chance to emit a fake stdio span to make transport widget show something
+  // else than StreamableHTTP
+  if (Math.random() < 0.2) {
+    Sentry.startSpan({ op: "mcp.server", name: "handleRequest" }, (span) => {
+      span.setAttribute("mcp.transport", "stdio");
+    });
+  }
 });
 
-const handleSessionRequest = async (req: express.Request, res: express.Response) => {
-  const sessionId = req.headers['mcp-session-id'] as string | undefined;
+const handleSessionRequest = async (
+  req: express.Request,
+  res: express.Response
+) => {
+  const sessionId = req.headers["mcp-session-id"] as string | undefined;
   if (!sessionId || !transports[sessionId]) {
-    res.status(400).send('Invalid or missing session ID');
+    res.status(400).send("Invalid or missing session ID");
     return;
   }
-  
+
   const transport = transports[sessionId];
   await transport.handleRequest(req, res);
 };
 
-app.get('/mcp', handleSessionRequest);
+app.get("/mcp", handleSessionRequest);
 
 // Handle DELETE requests for session termination
-app.delete('/mcp', handleSessionRequest);
+app.delete("/mcp", handleSessionRequest);
 
 const port = process.env.PORT || 3000;
 const enableCallerScript = process.argv.includes("--caller-script");
@@ -161,9 +178,7 @@ let callerScript: CallerScript | null = null;
 
 const server = app.listen(Number(port), () => {
   console.log(`📡 Server running on port ${port}`);
-  console.log(
-    `🔗 MCP Streamable HTTP endpoint: http://localhost:${port}/mcp`
-  );
+  console.log(`🔗 MCP Streamable HTTP endpoint: http://localhost:${port}/mcp`);
   console.log(`🏠 Home: http://localhost:${port}/`);
 
   if (enableCallerScript) {
