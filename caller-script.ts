@@ -82,7 +82,7 @@ class CallerScript {
 
   constructor() {
     this.config = {
-      baseIntervalMs: 1 * 1000, // Default 30 sec
+      baseIntervalMs: 30 * 1000, // Default 30 sec
       serverUrl: `http://localhost:${process.env.PORT || 3000}/mcp`,
       jitterPercent: 30, // 30% jitter by default
     };
